@@ -1,264 +1,101 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../../shared/providers/user_provider.dart';
-import '../../data/repositories/transaction_repository.dart';
-import '../../data/models/transaction_model.dart';
 
-class HomePage extends StatefulWidget {
+import '../../../account/presentation/pages/account_list_page.dart';
+import '../../../goal/presentation/pages/goal_list_page.dart';
+
+class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
-  @override
-  State<HomePage> createState() => _HomePageState();
-}
-
-class _HomePageState extends State<HomePage> {
-  final _transactionRepository = TransactionRepository();
-  List<TransactionModel> _recentTransactions = [];
-  double _totalBalance = 0;
-  double _monthlyIncome = 0;
-  double _monthlyExpense = 0;
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadData();
-  }
-
-  Future<void> _loadData() async {
-    final user = context.read<UserProvider>().user;
-    if (user == null) return;
-
-    final now = DateTime.now();
-    final transactions = await _transactionRepository.getTransactions(user.id!, limit: 5);
-    final summary = await _transactionRepository.getMonthlySummary(user.id!, now.year, now.month);
-    final balance = await _transactionRepository.getTotalBalance(user.id!);
-
-    setState(() {
-      _recentTransactions = transactions;
-      _monthlyIncome = summary['income'] ?? 0;
-      _monthlyExpense = summary['expense'] ?? 0;
-      _totalBalance = balance;
-      _isLoading = false;
-    });
-  }
+  static const brown = Color(0xFF5A3A28);
+  static const cream = Color(0xFFF8F4EE);
+  static const green = Color(0xFF5E8065);
+  static const red = Color(0xFFC45B5B);
 
   @override
   Widget build(BuildContext context) {
-    final user = context.watch<UserProvider>().user;
-
     return Scaffold(
-      backgroundColor: AppTheme.backgroundCream,
+      backgroundColor: cream,
       body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: _loadData,
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
+        child: Column(
+          children: [
+            // ================= HEADER =================
+            Container(
+              height: 155,
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+              decoration: const BoxDecoration(
+                color: brown,
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(24),
+                  bottomRight: Radius.circular(24),
+                ),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Expanded(
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           'MyFinance',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            color: AppTheme.primaryBrown,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 25,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
+                        SizedBox(height: 6),
                         Text(
-                          'สวัสดี, ${user?.displayName ?? 'ผู้ใช้'}',
-                          style: Theme.of(context).textTheme.bodyMedium,
+                          'วางแผนการเงิน... เพื่ออนาคตที่ดีกว่า',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 13,
+                          ),
                         ),
                       ],
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.notifications_outlined),
-                      onPressed: () {},
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-
-                // Balance Card
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryBrown,
-                    borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'ยอดเงินรวมทั้งหมด',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.8),
-                          fontSize: 14,
+
+                  IconButton(
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('ยังไม่มีการแจ้งเตือน'),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '฿${_totalBalance.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildIncomeExpenseItem(
-                              'รายรับเดือนนี้',
-                              _monthlyIncome,
-                              Icons.arrow_downward,
-                              Colors.green,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: _buildIncomeExpenseItem(
-                              'รายจ่ายเดือนนี้',
-                              _monthlyExpense,
-                              Icons.arrow_upward,
-                              Colors.red,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // Quick Actions
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildQuickAction(
-                        'เพิ่มรายรับ',
-                        Icons.add_circle_outline,
-                        AppTheme.accentGreen,
-                        () => Navigator.pushNamed(context, '/add-transaction', arguments: 'INCOME'),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildQuickAction(
-                        'เพิ่มรายจ่าย',
-                        Icons.remove_circle_outline,
-                        AppTheme.accentRed,
-                        () => Navigator.pushNamed(context, '/add-transaction', arguments: 'EXPENSE'),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-
-                // Recent Transactions
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'รายการล่าสุด',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    TextButton(
-                      onPressed: () {},
-                      child: const Text('ดูทั้งหมด'),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-
-                if (_isLoading)
-                  const Center(child: CircularProgressIndicator())
-                else if (_recentTransactions.isEmpty)
-                  _buildEmptyState()
-                else
-                  ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: _recentTransactions.length,
-                    itemBuilder: (context, index) {
-                      final transaction = _recentTransactions[index];
-                      return _buildTransactionItem(transaction);
+                      );
                     },
+                    icon: const Icon(
+                      Icons.notifications_none_outlined,
+                      color: Colors.white,
+                      size: 28,
+                    ),
                   ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildIncomeExpenseItem(String label, double amount, IconData icon, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, color: color, size: 16),
-              const SizedBox(width: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.8),
-                  fontSize: 12,
-                ),
+                ],
               ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            '฿${amount.toStringAsFixed(2)}',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
             ),
-          ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildQuickAction(String label, IconData icon, Color color, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: Colors.white, size: 32),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
+            // ================= CONTENT =================
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  children: [
+                    // Balance Card
+                    Transform.translate(
+                      offset: const Offset(0, -42),
+                      child: _buildBalanceCard(),
+                    ),
+
+                    // Accounts
+                    Transform.translate(
+                      offset: const Offset(0, -24),
+                      child: _buildAccounts(context),
+                    ),
+
+                    const SizedBox(height: 10),
+                  ],
+                ),
               ),
             ),
           ],
@@ -267,85 +104,295 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildEmptyState() {
+  // =====================================================
+  // BALANCE CARD
+  // =====================================================
+
+  Widget _buildBalanceCard() {
     return Container(
-      padding: const EdgeInsets.all(32),
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
       decoration: BoxDecoration(
-        color: AppTheme.cardWhite,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.receipt_long_outlined,
-            size: 48,
-            color: AppTheme.textLight,
+          const Text(
+            'ยอดเงินคงเหลือ',
+            style: TextStyle(
+              fontSize: 14,
+              color: Color(0xFF77716C),
+            ),
           ),
+
+          const SizedBox(height: 5),
+
+          const Text(
+            '฿18,750.00',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF2F2925),
+            ),
+          ),
+
           const SizedBox(height: 16),
-          Text(
-            'ยังไม่มีรายการ',
-            style: Theme.of(context).textTheme.bodyLarge,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'เริ่มบันทึกรายรับรายจ่ายของคุณ',
-            style: Theme.of(context).textTheme.bodyMedium,
+
+          Row(
+            children: [
+              Expanded(
+                child: _summary(
+                  icon: Icons.arrow_downward_rounded,
+                  title: 'รายรับเดือนนี้',
+                  amount: '฿25,000.00',
+                  color: green,
+                ),
+              ),
+
+              const SizedBox(width: 10),
+
+              Expanded(
+                child: _summary(
+                  icon: Icons.arrow_upward_rounded,
+                  title: 'รายจ่ายเดือนนี้',
+                  amount: '฿6,250.00',
+                  color: red,
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildTransactionItem(TransactionModel transaction) {
-    final isIncome = transaction.transactionType == 'INCOME';
-    
+  // =====================================================
+  // INCOME / EXPENSE SUMMARY
+  // =====================================================
+
+  Widget _summary({
+    required IconData icon,
+    required String title,
+    required String amount,
+    required Color color,
+  }) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 10,
+      ),
       decoration: BoxDecoration(
-        color: AppTheme.cardWhite,
-        borderRadius: BorderRadius.circular(12),
+        color: const Color(0xFFF7F5F1),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
         children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: isIncome ? AppTheme.accentGreen.withOpacity(0.1) : AppTheme.accentRed.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              isIncome ? Icons.arrow_downward : Icons.arrow_upward,
-              color: isIncome ? AppTheme.accentGreen : AppTheme.accentRed,
-            ),
+          Icon(
+            icon,
+            size: 21,
+            color: color,
           ),
-          const SizedBox(width: 12),
+
+          const SizedBox(width: 8),
+
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  transaction.description ?? 'ไม่มีคำอธิบาย',
-                  style: Theme.of(context).textTheme.titleMedium,
+                  title,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: Color(0xFF817A74),
+                  ),
                 ),
+
                 const SizedBox(height: 4),
+
                 Text(
-                  transaction.transactionDate,
-                  style: Theme.of(context).textTheme.bodyMedium,
+                  amount,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
                 ),
               ],
             ),
           ),
-          Text(
-            '${isIncome ? '+' : '-'}฿${transaction.amount.toStringAsFixed(2)}',
-            style: TextStyle(
-              color: isIncome ? AppTheme.accentGreen : AppTheme.accentRed,
-              fontWeight: FontWeight.w600,
-              fontSize: 16,
-            ),
-          ),
         ],
+      ),
+    );
+  }
+
+  // =====================================================
+  // MY ACCOUNTS
+  // =====================================================
+
+  Widget _buildAccounts(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'บัญชีของฉัน',
+          style: TextStyle(
+            fontSize: 19,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF4C4038),
+          ),
+        ),
+
+        const SizedBox(height: 12),
+
+        // ================= DEPOSIT =================
+
+        _accountCard(
+          icon: Icons.account_balance_rounded,
+          iconColor: brown,
+          title: 'ยอดเงินฝาก',
+          amount: '฿18,750.00',
+          subtitle: 'ยอดคงเหลือ',
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const AccountListPage(),
+              ),
+            );
+          },
+        ),
+
+        const SizedBox(height: 12),
+
+        // ================= SAVING GOAL =================
+
+        _accountCard(
+          icon: Icons.track_changes_rounded,
+          iconColor: const Color(0xFFC97864),
+          title: 'เป้าหมายออมเงิน',
+          amount: '฿5,000.00',
+          subtitle: '',
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => GoalListPage(),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  // =====================================================
+  // ACCOUNT CARD
+  // =====================================================
+
+  Widget _accountCard({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String amount,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(13),
+        child: Container(
+          height: 76,
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(
+            horizontal: 14,
+          ),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(13),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 5,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              // Icon
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: iconColor.withOpacity(0.10),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  icon,
+                  size: 22,
+                  color: iconColor,
+                ),
+              ),
+
+              const SizedBox(width: 12),
+
+              // Text
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF77716C),
+                      ),
+                    ),
+
+                    const SizedBox(height: 3),
+
+                    Text(
+                      amount,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF38312C),
+                      ),
+                    ),
+
+                    if (subtitle.isNotEmpty)
+                      Text(
+                        subtitle,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Color(0xFF9A928B),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+
+              // Arrow
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: Color(0xFF9A928B),
+                size: 25,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

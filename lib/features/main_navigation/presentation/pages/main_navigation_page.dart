@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../../home/presentation/pages/home_page.dart';
 import '../../../account/presentation/pages/account_list_page.dart';
 import '../../../report/presentation/pages/income_report_page.dart';
@@ -8,7 +9,8 @@ class MainNavigationPage extends StatefulWidget {
   const MainNavigationPage({super.key});
 
   @override
-  State<MainNavigationPage> createState() => _MainNavigationPageState();
+  State<MainNavigationPage> createState() =>
+      _MainNavigationPageState();
 }
 
 class _MainNavigationPageState extends State<MainNavigationPage> {
@@ -25,28 +27,42 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: _pages[_currentIndex],
+
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
+        type: BottomNavigationBarType.fixed,
+
+        selectedItemColor: const Color(0xFF5A3A28),
+        unselectedItemColor: const Color(0xFF9A928B),
+
+        selectedFontSize: 10,
+        unselectedFontSize: 10,
+
+        backgroundColor: Colors.white,
+
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'หน้าหลัก',
+            activeIcon: Icon(Icons.home_rounded),
+            label: 'หน้าแรก',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.account_balance_wallet_outlined),
-            activeIcon: Icon(Icons.account_balance_wallet),
+            activeIcon: Icon(Icons.account_balance_wallet_rounded),
             label: 'บัญชี',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.trending_up),
-            activeIcon: Icon(Icons.trending_up),
+            icon: Icon(Icons.arrow_downward_rounded),
             label: 'สรุปรายรับ',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.trending_down),
-            activeIcon: Icon(Icons.trending_down),
+            icon: Icon(Icons.arrow_upward_rounded),
             label: 'สรุปรายจ่าย',
           ),
         ],
