@@ -19,7 +19,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 4,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -33,6 +33,7 @@ class DatabaseHelper {
         email TEXT UNIQUE NOT NULL,
         password_hash TEXT NOT NULL,
         display_name TEXT NOT NULL,
+        status TEXT DEFAULT '',
         currency TEXT DEFAULT 'THB',
         avatar_url TEXT,
         last_login_at TEXT,
@@ -106,6 +107,8 @@ class DatabaseHelper {
         account_id INTEGER NOT NULL,
         target_name TEXT NOT NULL,
         target_amount REAL NOT NULL,
+        current_amount REAL NOT NULL DEFAULT 0,
+        icon_code_point INTEGER NOT NULL DEFAULT 59621,
         status TEXT CHECK(status IN ('IN_PROGRESS', 'COMPLETED', 'CANCELLED')) DEFAULT 'IN_PROGRESS',
         deadline_date TEXT,
         completed_at TEXT,
@@ -169,12 +172,46 @@ class DatabaseHelper {
 
   Future _upgradeDB(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
-      // Future migrations
+      await db.execute(
+        'ALTER TABLE saving_goals ADD COLUMN current_amount REAL NOT NULL DEFAULT 0',
+      );
+    }
+    if (oldVersion < 3) {
+      await db.execute(
+        'ALTER TABLE saving_goals ADD COLUMN icon_code_point INTEGER NOT NULL DEFAULT 59621',
+      );
+    }
+    if (oldVersion < 4) {
+      await db.execute("ALTER TABLE users ADD COLUMN status TEXT DEFAULT ''");
     }
   }
 
   Future close() async {
     final db = await instance.database;
     db.close();
+  }
+
+  Future<void> resetUserFinancialData(int userId) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.rawDelete('''
+        DELETE FROM goal_contributions
+        WHERE goal_id IN (SELECT id FROM saving_goals WHERE user_id = ?)
+           OR account_id IN (SELECT id FROM accounts WHERE user_id = ?)
+      ''', [userId, userId]);
+      await txn.delete('transactions', where: 'user_id = ?', whereArgs: [userId]);
+      await txn.delete('saving_goals', where: 'user_id = ?', whereArgs: [userId]);
+      await txn.delete('categories', where: 'user_id = ?', whereArgs: [userId]);
+      await txn.delete('accounts', where: 'user_id = ?', whereArgs: [userId]);
+      await txn.insert('accounts', {
+        'user_id': userId,
+        'account_name': 'เงินสด',
+        'account_type': 'CASH',
+        'initial_balance': 0,
+        'is_default': 1,
+        'color_hex': '#6B4F3A',
+        'icon_name': 'cash',
+      });
+    });
   }
 }

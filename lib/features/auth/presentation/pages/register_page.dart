@@ -55,8 +55,17 @@ class _RegisterPageState extends State<RegisterPage> {
     return Scaffold(
       backgroundColor: AppTheme.backgroundCream,
       appBar: AppBar(
-        title: const Text('สมัครสมาชิก'),
+        title: const Text(
+          'สมัครสมาชิก',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+            color: Colors.black,
+          ),
+        ),
         backgroundColor: Colors.transparent,
+        foregroundColor: Colors.black,
+        iconTheme: const IconThemeData(color: Colors.black),
         elevation: 0,
       ),
       body: SafeArea(

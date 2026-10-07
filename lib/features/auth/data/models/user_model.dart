@@ -2,6 +2,7 @@ class UserModel {
   final int? id;
   final String email;
   final String displayName;
+  final String status;
   final String currency;
   final String? avatarUrl;
   final DateTime? lastLoginAt;
@@ -11,6 +12,7 @@ class UserModel {
     this.id,
     required this.email,
     required this.displayName,
+    this.status = '',
     this.currency = 'THB',
     this.avatarUrl,
     this.lastLoginAt,
@@ -22,6 +24,7 @@ class UserModel {
       'id': id,
       'email': email,
       'display_name': displayName,
+      'status': status,
       'currency': currency,
       'avatar_url': avatarUrl,
       'last_login_at': lastLoginAt?.toIso8601String(),
@@ -34,6 +37,7 @@ class UserModel {
       id: map['id'],
       email: map['email'] ?? '',
       displayName: map['display_name'] ?? '',
+      status: map['status'] ?? '',
       currency: map['currency'] ?? 'THB',
       avatarUrl: map['avatar_url'],
       lastLoginAt: map['last_login_at'] != null 
@@ -42,6 +46,28 @@ class UserModel {
       createdAt: map['created_at'] != null 
           ? DateTime.parse(map['created_at']) 
           : DateTime.now(),
+    );
+  }
+
+  UserModel copyWith({
+    int? id,
+    String? email,
+    String? displayName,
+    String? status,
+    String? currency,
+    String? avatarUrl,
+    DateTime? lastLoginAt,
+    DateTime? createdAt,
+  }) {
+    return UserModel(
+      id: id ?? this.id,
+      email: email ?? this.email,
+      displayName: displayName ?? this.displayName,
+      status: status ?? this.status,
+      currency: currency ?? this.currency,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      lastLoginAt: lastLoginAt ?? this.lastLoginAt,
+      createdAt: createdAt ?? this.createdAt,
     );
   }
 }

@@ -1,17 +1,9 @@
 import 'package:flutter/material.dart';
+import 'transaction_report_page.dart';
 
 class IncomeReportPage extends StatelessWidget {
   const IncomeReportPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('รายรับ'),
-      ),
-      body: const Center(
-        child: Text('รายการรายรับ'),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => const TransactionReportPage(isIncome: true);
 }

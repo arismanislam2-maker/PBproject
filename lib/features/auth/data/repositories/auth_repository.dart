@@ -1,4 +1,4 @@
-import 'package:sqflite/sqflite.dart';
+
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
 import '../../../../core/database/database_helper.dart';
@@ -108,6 +108,36 @@ class AuthRepository {
     await db.update(
       'users',
       {'deleted_at': DateTime.now().toIso8601String()},
+      where: 'id = ?',
+      whereArgs: [userId],
+    );
+  }
+
+  Future<void> updateUserAvatar(int userId, String avatarUrl) async {
+    final db = await _dbHelper.database;
+    await db.update(
+      'users',
+      {'avatar_url': avatarUrl},
+      where: 'id = ?',
+      whereArgs: [userId],
+    );
+  }
+
+  Future<void> updateUserProfile({
+    required int userId,
+    required String displayName,
+    required String status,
+    String? avatarUrl,
+  }) async {
+    final db = await _dbHelper.database;
+    await db.update(
+      'users',
+      {
+        'display_name': displayName.trim(),
+        'status': status.trim(),
+        if (avatarUrl != null) 'avatar_url': avatarUrl,
+        'updated_at': DateTime.now().toIso8601String(),
+      },
       where: 'id = ?',
       whereArgs: [userId],
     );

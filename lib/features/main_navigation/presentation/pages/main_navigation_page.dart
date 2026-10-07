@@ -4,6 +4,7 @@ import '../../../home/presentation/pages/home_page.dart';
 import '../../../account/presentation/pages/account_list_page.dart';
 import '../../../report/presentation/pages/income_report_page.dart';
 import '../../../report/presentation/pages/expense_report_page.dart';
+import '../../../ai/presentation/pages/ai_account_chat_page.dart';
 
 class MainNavigationPage extends StatefulWidget {
   const MainNavigationPage({super.key});
@@ -19,6 +20,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
   final List<Widget> _pages = [
     const HomePage(),
     const AccountListPage(),
+    const AiAccountChatPage(),
     const IncomeReportPage(),
     const ExpenseReportPage(),
   ];
@@ -56,6 +58,11 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
             icon: Icon(Icons.account_balance_wallet_outlined),
             activeIcon: Icon(Icons.account_balance_wallet_rounded),
             label: 'บัญชี',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.auto_awesome_outlined),
+            activeIcon: Icon(Icons.auto_awesome_rounded),
+            label: 'ถาม AI',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.arrow_downward_rounded),

@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../../data/services/session_service.dart';
 import '../../../../shared/providers/user_provider.dart';
+import '../../../../shared/providers/transaction_provider.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -19,6 +21,20 @@ class _LoginPageState extends State<LoginPage> {
   
   bool _isLoading = false;
   bool _obscurePassword = true;
+  bool _rememberMe = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRememberMeSetting();
+  }
+
+  Future<void> _loadRememberMeSetting() async {
+    final enabled = await SessionService.isRememberMeEnabled();
+    if (mounted) {
+      setState(() => _rememberMe = enabled);
+    }
+  }
 
   Future<void> _login() async {
     if (_formKey.currentState!.validate()) {
@@ -31,7 +47,15 @@ class _LoginPageState extends State<LoginPage> {
         );
         
         if (user != null && mounted) {
+          if (user.id != null) {
+            await SessionService.saveUserSession(user.id!, rememberMe: _rememberMe);
+          }
+          if (!mounted) return;
           context.read<UserProvider>().setUser(user);
+          if (user.id != null) {
+            await context.read<TransactionProvider>().loadForUser(user.id!);
+          }
+          if (!mounted) return;
           Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
         }
       } catch (e) {
@@ -76,9 +100,12 @@ class _LoginPageState extends State<LoginPage> {
                   const SizedBox(height: 24),
                   
                   Text(
-                    'MyFinance',
+                    'PB RAIRAIJAI',
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.headlineSmall,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primaryBrown,
+                        ),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -126,7 +153,41 @@ class _LoginPageState extends State<LoginPage> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 12),
+
+                  // Remember me checkbox
+                  Row(
+                    children: [
+                      SizedBox(
+                        height: 24,
+                        width: 24,
+                        child: Checkbox(
+                          value: _rememberMe,
+                          activeColor: AppTheme.primaryBrown,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          onChanged: (val) {
+                            setState(() => _rememberMe = val ?? true);
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () {
+                          setState(() => _rememberMe = !_rememberMe);
+                        },
+                        child: const Text(
+                          'จดจำการเข้าสู่ระบบ',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Color(0xFF555555),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
 
                   // Login Button
                   ElevatedButton(

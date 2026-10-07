@@ -22,20 +22,14 @@ class AppTheme {
         primary: primaryBrown,
         secondary: secondaryBrown,
         surface: cardWhite,
-        background: backgroundCream,
         error: accentRed,
       ),
 
       appBarTheme: const AppBarTheme(
-        backgroundColor: primaryBrown,
-        foregroundColor: Colors.white,
+        backgroundColor: backgroundCream,
+        foregroundColor: Colors.black,
         elevation: 0,
         centerTitle: true,
-        titleTextStyle: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-          color: Colors.white,
-        ),
       ),
 
       cardTheme: CardThemeData(
